@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+    xmlns:s="library://ns.adobe.com/flex/spark" 
+    xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600"
+     creationComplete="application1_creationCompleteHandler(event)">
+    <fx:Script>
+    <![CDATA[
+        import com.ithaca.visu.ui.utils.IconEnum;
+        
+        import mx.collections.ArrayCollection;
+        import mx.events.FlexEvent;
+        
+        [Bindable]public var bodyLabel:ArrayCollection = new ArrayCollection(
+            [ {label:"среднего", data:1}, 
+            {label:"худощавого", data:2}]);
+        
+        [Bindable]public var colorHair:ArrayCollection = new ArrayCollection(
+            [ {label:"светло-русые", data:1}, 
+            {label:"русые", data:2},
+            {label:"добавить цвет", data:3}  ]);
+
+        [Bindable]public var formHair:ArrayCollection = new ArrayCollection(
+            [ {label:"волнистые", data:1}, 
+            {label:"прямые", data:2},
+            {label:"добавить форму", data:3}  ]);
+        
+        [Bindable]public var longHair:ArrayCollection = new ArrayCollection(
+            [ {label:"длинные", data:1}, 
+            {label:"ниже плеч", data:2},
+            {label:"добавить длинну", data:3}  ]);
+        
+        [Bindable]public var colorUsi:ArrayCollection = new ArrayCollection(
+            [ {label:"русые", data:1}, 
+            {label:"чёрные", data:2},
+            {label:"добавить цвет", data:3}  ]);
+        
+        [Bindable]public var formUsi:ArrayCollection = new ArrayCollection(
+            [ {label:"большие", data:1}, 
+            {label:"добавить форму", data:2} ]);
+
+        [Bindable]public var formUhi:ArrayCollection = new ArrayCollection(
+            [ {label:"круглые", data:1},
+              {label:"овальные", data:2},
+            {label:"добавить форму", data:3} ]);
+        
+        [Bindable]public var sizeUhi:ArrayCollection = new ArrayCollection(
+            [ {label:"большие", data:1},
+              {label:"маленькие", data:2},
+            {label:"добавить размер", data:3} ]);
+        
+        [Bindable]public var detailUhi:ArrayCollection = new ArrayCollection(
+            [ {label:"с проколом", data:1},
+              {label:"нет мочки", data:2},
+            {label:"добавить деталь", data:3} ]);
+        
+        [Bindable]public var colorSkin:ArrayCollection = new ArrayCollection(
+            [ {label:"смуглая", data:1},
+              {label:"светлая", data:2},
+            {label:"добавить цвет", data:3} ]);
+        
+        [Bindable]public var detailSkin:ArrayCollection = new ArrayCollection(
+            [ {label:"веснушки", data:1},
+              {label:"добавить деталь", data:2} ]);
+        
+        [Bindable]public var colorEye:ArrayCollection = new ArrayCollection(
+            [ {label:"голубые", data:1},
+              {label:"серо-зелёные", data:2},
+            {label:"добавить цвет", data:3} ]);
+
+        [Bindable]public var formEye:ArrayCollection = new ArrayCollection(
+            [ {label:"круглые", data:1},
+              {label:"овальные", data:2},
+            {label:"добавить форму", data:3} ]);
+
+        [Bindable]public var detailEye:ArrayCollection = new ArrayCollection(
+            [ {label:"протез левого", data:1},
+              {label:"добавить деталь", data:2} ]);
+        
+        [Bindable]public var colorEyebrow:ArrayCollection = new ArrayCollection(
+            [ {label:"русые", data:1}, 
+                {label:"чёрные", data:2},
+                {label:"добавить цвет", data:3}  ]);
+
+        [Bindable]public var formEyebrow:ArrayCollection = new ArrayCollection(
+            [ {label:"густые", data:1},
+              {label:"дугообразные", data:2},
+            {label:"добавить форму", data:3} ]);
+
+        [Bindable]public var detailEyebrow:ArrayCollection = new ArrayCollection(
+            [ {label:"вертикальный шрам на левой", data:1},
+              {label:"добавить деталь", data:2} ]);
+        
+        [Bindable]public var formFace:ArrayCollection = new ArrayCollection(
+            [ {label:"овальное", data:1},
+              {label:"круглое", data:2},
+            {label:"добавить форму", data:3} ]);
+
+        [Bindable]public var detailFace:ArrayCollection = new ArrayCollection(
+            [ {label:"веснушки", data:1},
+              {label:"добавить деталь", data:2} ]);
+        
+        
+
+        protected function application1_creationCompleteHandler(event:FlexEvent):void
+        {
+            
+            
+        }
+
+    ]]>
+    </fx:Script>
+    <fx:Declarations>
+        <!-- Place non-visual elements (e.g., services, value objects) here -->
+    </fx:Declarations>
+    <mx:TabNavigator  width="584" height="200" horizontalCenter="0" verticalCenter="0">
+        <s:NavigatorContent label="Возраст/рост/вес" width="100%" height="100%">
+            <s:VGroup x="0" y="0" width="100%" height="100%">
+                <s:HGroup width="100%" height="45" verticalAlign="middle" textAlign="center" paddingLeft="50">
+                    <s:Label text="Возраст на вид : " fontSize="16"/>
+                    <s:Label text="от" fontSize="16"/>
+                    <s:NumericStepper id="numStepper" width="55" minimum="1" maximum="100"
+                        value="20" snapInterval="1"/>
+                    <s:Label text="до" fontSize="16"/>
+                    <s:NumericStepper id="numStepper0" width="55" minimum="1" maximum="100"
+                        value="25"  snapInterval="1"/>
+                    <s:Label text="лет" fontSize="16"/>
+                </s:HGroup>
+                <s:HGroup width="100%" height="45" verticalAlign="middle" textAlign="center" gap="15" paddingLeft="50">
+                    <s:Label text="Рост : " fontSize="16"/>
+                    <s:Label text="от" fontSize="16"/>
+                    <s:NumericStepper id="numStepper1" width="55" maximum="250" minimum="45"
+                        value="160" snapInterval="1"/>
+                    <s:Label text="см   до" fontSize="16"/>
+                    <s:NumericStepper id="numStepper2" width="55"  maximum="250" minimum="45"
+                        value="170" snapInterval="1"/>
+                    <s:Label text="см  " fontSize="16"/>
+                </s:HGroup>
+                <s:HGroup width="100%" height="45" verticalAlign="middle" textAlign="center" gap="15" paddingLeft="50">
+                    <s:Label text="Телосложение  :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{bodyLabel}" width="150" color="0x000000"
+                        selectedIndex="0"/>
+                </s:HGroup>
+  <!--              <s:SWFLoader source="{IconEnum.getIconByName('loader_gif')}" /> 
+                <s:Image source="{IconEnum.getIconByName('loader_gif')}"/>-->
+                <mx:Image source="{IconEnum.getIconByName('loader_gif')}"/>
+            </s:VGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Волосы" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+               <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                   <s:Label text="Цвет :" fontSize="16"/>
+                   <s:ComboBox dataProvider="{colorHair}" color="0x000000"
+                       selectedIndex="0"/>
+               </s:VGroup> 
+               <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Форма :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{formHair}"  color="0x000000"
+                        selectedIndex="0"/>
+               </s:VGroup> 
+               <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Длинна :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{longHair}"  color="0x000000"
+                        selectedIndex="0"/>
+               </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Усы" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Цвет :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{colorUsi}" color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Форма :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{formUsi}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Уши" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Форма :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{formUhi}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Размер :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{sizeUhi}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Детали :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{detailUhi}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Кожа" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Цвет :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{colorSkin}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Детали :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{detailSkin}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Глаза" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Цвет :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{colorEye}" color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Форма :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{formEye}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Детали :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{detailEye}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Брови" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Цвет :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{colorEyebrow}" color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Форма :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{formEyebrow}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Детали :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{detailEyebrow}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Лицо" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Форма :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{formFace}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+                <s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+                    <s:Label text="Детали :" fontSize="16"/>
+                    <s:ComboBox dataProvider="{detailFace}"  color="0x000000"
+                        selectedIndex="0"/>
+                </s:VGroup> 
+            </s:HGroup>
+        </s:NavigatorContent>
+        <s:NavigatorContent label="Особые приметы" width="100%" height="100%">
+            <s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+                <s:RichEditableText x="56" y="22" text="на правой руке на нижней фаланге указательного пальца с внешней стороны ожог от утюга, внизу живота у левой ноги родинка 0,5 см круглой формы, на животе след от оспы в виде выпуклого белого пятна" width="100%" height="100%" fontSize="16" paddingTop="25" paddingLeft="10" paddingRight="10" paddingBottom="10"/>
+            </s:HGroup>
+        </s:NavigatorContent>
+    </mx:TabNavigator>
+</s:Application>

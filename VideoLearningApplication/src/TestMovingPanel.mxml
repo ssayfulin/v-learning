@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+    xmlns:s="library://ns.adobe.com/flex/spark" 
+    xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600"
+    xmlns:components="com.ithaca.utils.components.*"
+     creationComplete="application1_creationCompleteHandler(event)" xmlns:composants="com.composants.*" xmlns:controls="com.ithaca.visu.controls.*"
+     >
+    <fx:Script>
+    <![CDATA[
+        import com.ithaca.documentarisation.RetroDocumentConst;
+        import com.ithaca.documentarisation.model.RetroDocument;
+        import com.ithaca.documentarisation.model.Segment;
+        import com.ithaca.documentarisation.renderer.BlocTitleBilanRenderer;
+       /*  import com.ithaca.visu.controls.skins.SendMarkerAnimationSkin; */
+        import com.ithaca.visu.events.PanelButtonEvent;
+        import com.ithaca.visu.model.vo.RetroDocumentVO;
+        import com.renderers.ListRenderer;
+        
+        import mx.collections.ArrayCollection;
+        import mx.events.CollectionEvent;
+        import mx.events.FlexEvent;
+        
+        var dp:ArrayCollection = new ArrayCollection();
+        var w:Number = 0;
+
+        protected function panelbutton1_clickButtonModeMaxHandler(event:PanelButtonEvent):void
+        {
+          this.currentState = "viewBilan";
+            // TODO Auto-generated method stub
+        }
+
+
+        protected function panelbutton1_clickButtonModeZoomHandler(event:PanelButtonEvent):void
+        {
+          this.currentState = "normal";
+        }
+
+
+        protected function button1_clickHandler(event:MouseEvent):void
+        {
+            var o:Object =  new Object();
+            o.w = list.width;
+                
+            dp.addItem(o);
+            list.invalidateSize();
+            
+        }
+
+
+        protected function application1_creationCompleteHandler(event:FlexEvent):void
+        {
+            w = list.width;
+           
+        }
+
+
+        protected function button2_clickHandler(event:MouseEvent):void
+        {
+           /*  sm.goAnimation(); */
+        }
+
+    ]]>
+    </fx:Script>
+    <s:states>
+        <s:State name="normal"/>
+        <s:State name="viewBilan"/>
+    </s:states>
+    <fx:Declarations>
+        <!-- Place non-visual elements (e.g., services, value objects) here -->
+    </fx:Declarations>
+    <s:transitions>
+        <s:Transition fromState="normal" toState="viewBilan">
+            <s:Resize  target="{pn}" duration="1000"/>
+        </s:Transition>
+        <s:Transition fromState="viewBilan" toState="normal">
+            <s:Resize  target="{pn}" duration="1000"/>
+        </s:Transition>
+    </s:transitions>
+    <s:Panel width="500" height="200" x="200" y="100">
+        <mx:HDividedBox  width="100%"  height="100%">
+            <s:Panel  id="pn" width.normal="200" width.viewBilan="20" height="100%">
+                <s:Label text="zezez"/>
+            </s:Panel>
+            <s:List id="list" dataProvider="{dp}" itemRenderer="com.renderers.ListRenderer" height="100%"/>
+                
+          
+        </mx:HDividedBox>
+        <s:Button label="add" click="button1_clickHandler(event)"/>
+    </s:Panel>
+<!--    <components:PanelButton width="500" height="200" 
+         buttonMuteMicroVisible="true"  clickButtonMuteMicro="panelbutton1_clickButtonModeMaxHandler(event)"
+        buttonModeZoomVisible="true" clickButtonModeZoom="panelbutton1_clickButtonModeZoomHandler(event)">
+        <mx:HDividedBox  width="100%"  height="100%">
+            <s:Panel  id="pn" width.normal="200" width.viewBilan="20" height="100%">
+                <s:Label text="zezez"/>
+            </s:Panel>
+            <s:List id="list" itemRenderer="com.ithaca.documentarisation.renderer.BlocTitleBilanRenderer">
+                
+            </s:List>
+        </mx:HDividedBox>
+        <s:Button label="add" click="button1_clickHandler(event)"/>
+    </components:PanelButton>-->
+    <s:VGroup width="500" >
+        <s:Button click="button2_clickHandler(event)">
+            <s:label>from normal to show</s:label>
+        </s:Button>
+     <!--   <controls:SendMarkerAnimation id="sm" width="400" height="40" skinClass="com.ithaca.visu.controls.skins.SendMarkerAnimationSkin"/>
+    --></s:VGroup>
+   <!-- <controls:SendMarkerAnimation skinClass="com.ithaca.visu.controls.skins.SendMarkerAnimationSkin" width="100"/>-->
+</s:Application>

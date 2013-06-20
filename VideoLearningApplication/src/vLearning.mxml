@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+    xmlns:s="library://ns.adobe.com/flex/spark" 
+    xmlns:mx="library://ns.adobe.com/flex/mx"
+    xmlns:containers="ws.tink.spark.containers.*" 
+    preinitialize="application1_preinitializeHandler(event)"
+    creationComplete="application1_creationCompleteHandler(event)" 
+	currentStateChange="currentStateChangeHandler(event)" xmlns:maps="maps.*"
+    currentState="viewLogin" xmlns:mate="http://mate.asfusion.com/" xmlns:components="com.ithaca.utils.components.*" xmlns:video="com.ithaca.visu.view.video.*">
+    <fx:Script>
+    <![CDATA[
+		import com.event.AuthenticationEvent;
+		import com.event.MainManagerEvent;
+		import com.ithaca.utils.components.skins.PanelButtonSkin;
+		import com.ithaca.visu.events.PanelButtonEvent;
+		import com.ithaca.visu.model.User;
+		import com.ithaca.visu.model.vo.UserVO;
+		import com.ithaca.visu.view.video.skins.VisuVisioAdvancedSkin;
+		import com.model.User;
+		
+		import gnu.as3.gettext.FxGettext;
+		import gnu.as3.gettext.ISO_3166;
+		import gnu.as3.gettext.ISO_639_1;
+		import gnu.as3.gettext.Locale;
+		import gnu.as3.gettext._FxGettext;
+		import gnu.as3.gettext.services.IGettextService;
+		import gnu.as3.gettext.services.URLLoaderService;
+		
+		import mx.collections.ArrayCollection;
+		import mx.collections.IList;
+		import mx.core.FlexGlobals;
+		import mx.events.CollectionEvent;
+		import mx.events.FlexEvent;
+		import mx.events.StateChangeEvent;
+		import mx.utils.URLUtil;
+		import mx.validators.StringValidator;
+        
+        protected var loginValidator:StringValidator;
+        
+        
+        public var server : String = "localhost";
+        public var port   : uint = 5080; 
+        public var appName: String = "vLearning";
+        public var roomName: String = "myRoom";
+		private static var SHOW_MAN:String = "SM";
+		private static var OPERATOR:String = "Op";
+		private static var INVITE:String = "In";
+		private static var VIEWER:String = "Vw";
+		
+		private static var LIVE:String = "live";
+		private static var PASSIVE:String = "passive";
+		
+		private static var SM_OUT:String = "showManOut";
+		private static var SM_JOIN:String = "showManJoin";
+		private static var SM_LIVE:String = "showManLive";
+		private var _showManStatus:String; 
+		
+		// set by server id, aftre authentification
+		private var userId:Number = -1;
+		
+		private var roleUser:int = -1;
+        
+        private var label:Label;
+		[Bindable]
+		private var fxgt:_FxGettext;
+        
+		private var listUserIn:ArrayCollection = new ArrayCollection();
+		private var listUserViewer:ArrayCollection = new ArrayCollection();
+		private var listConnectedUser:ArrayCollection = new ArrayCollection();
+        public var LOGIN_TUTEUR:String = "ivis4mac";
+		[Bindable]
+		private var _connection:NetConnection;
+		[Bindable]
+		private var _loggedClientId:String;
+		private var _loggedClientName:String;
+		private var _loggedClientRole:String;
+		
+		
+		
+        protected function submit_clickHandler(event:MouseEvent):void
+        {
+			var login:String = "ivis4mac";
+			if(loginField.text.length > 0)
+			{
+				login = loginField.text	
+			}
+                var loginEvent:AuthenticationEvent = new AuthenticationEvent(AuthenticationEvent.CONNECT);
+                loginEvent.rtmpSever =  "rtmp://" + this.server + "/" + this.appName + "/" + this.roomName;
+                loginEvent.params = {"nameUser" : login};
+                dispatchEvent(loginEvent);
+				
+            /* var result:Array = Validator.validateAll( [loginValidator])
+            if (result.length==0)
+            { 
+            } */
+				
+			this.currentState = "viewWaitAuthentication";
+        }
+        
+        protected function application1_creationCompleteHandler(event:FlexEvent):void
+        {
+            loginValidator = new StringValidator();
+            loginValidator.required = true;
+            
+            loginValidator.source = loginField;
+            loginValidator.property = "text";
+        }
+        
+        
+        protected function application1_preinitializeHandler(event:FlexEvent):void
+        {
+            var appUrl:String = FlexGlobals.topLevelApplication.url; 
+            server = URLUtil.getServerName( appUrl); 
+            port   = URLUtil.getPort( appUrl );
+            var appUrlSplit:Array = appUrl.split('/');
+            // get app name that before last element of the array
+            appName= appUrlSplit[appUrlSplit.length-2];
+			
+			fxgt = FxGettext;
+			
+			// we set the locale for the messages category to fr_FR
+			setlocale(Locale.LC_MESSAGES, mklocale(ISO_639_1.FR,ISO_3166.FR));				
+			
+			// prepare the service to load the translations.
+			// We assume the swf is at the root 
+			// of the ./FlexHelloWorld directory
+			var service:IGettextService = new URLLoaderService(".");
+			service.addEventListener(Event.COMPLETE, onServiceComplete);
+			service.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+			
+			// You can listen to this event, but it is not required in 
+			// MXML files: the labels are automatically updated at startup 
+			// and when the locale changes
+			fxgt.addEventListener(Event.COMPLETE, onComplete);
+			
+			// Binds the messages of the helloword domain to the 
+			// default directory (locale)
+			fxgt.bindtextdomain("visu2", null, service);
+			
+			// We select helloworld to be the default domain. 
+			fxgt.textdomain("visu2");
+        }
+        
+		private function onServiceComplete(event:Event):void
+		{
+			// do some stuff here, if needed.
+			//var eventUpdateLanguage:ApplicationMenuEvent = new ApplicationMenuEvent(ApplicationMenuEvent.UPDATE_LANGUAGE);
+			//this.dispatchEvent(eventUpdateLanguage);
+		}
+		
+		private function onIOError(event:IOErrorEvent):void
+		{
+			// an error occured while loading the catalog
+			// it probably means there is no translations for this locale
+			// or the base path to the translations is incorrect.
+			trace(event);
+		}
+		
+		private function onComplete(event:Event):void
+		{
+			// update labels of the buttons at all modules
+		}
+		/////////////////////////////////////////
+		///// Invoke server side functions
+		/////////////////////////////////////////
+
+		private function setLoggedUser(event:MainManagerEvent):void
+		{
+			// settings
+			_connection = event.netConnection;
+			_loggedClientId = event.idClient;
+			_loggedClientName = event.nameLoggedUser;
+			_loggedClientRole = event.roleUser;
+
+			var loggedUser:com.model.User = new com.model.User();
+			loggedUser.idUser = _loggedClientId;
+			loggedUser.nameUser = _loggedClientName;
+			loggedUser.roleUser = _loggedClientRole;
+			loggedUser.statusUser = PASSIVE;
+			this.addUser(loggedUser);
+
+			switch (_loggedClientRole)
+			{
+				case "SM":
+					currentState = "viewShowMan";
+					break;
+				case "In":
+					currentState = "viewInvite";
+					break;
+				case "Vw":
+					currentState = "viewGuest";
+					break;
+			}
+			
+		}
+		private function setConnectedUsers(event:MainManagerEvent):void
+		{
+			for each(var user:com.model.User in event.arrList)
+			{
+				addUser(user);
+			}
+			
+		}
+		private function joinUser(event:MainManagerEvent):void
+		{
+			var user:com.model.User = new com.model.User();
+			user.nameUser = event.nameLoggedUser;
+			user.idUser = event.idClient;
+			user.roleUser = event.roleUser;
+			user.statusUser = PASSIVE;
+			addUser(user);
+		}
+		
+		private function changeStatusUser(event:MainManagerEvent):void
+		{
+			var userId:String = event.idClient;
+			var status:String = event.statusUser;
+			var user:com.model.User = getConnectedUserById(userId, listConnectedUser);
+			var role:String = user.roleUser;
+			if(user)
+			{
+				user.statusUser = status;
+				
+				if(status == LIVE)
+				{
+					switch (role)
+					{
+						case SHOW_MAN:
+							// set camera
+							/* var userVO:UserVO = new UserVO();
+							userVO.firstname = user.nameUser
+							userVO.lastname = user.nameUser
+							userVO.id_user = new int(user.idUser);
+							visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false); */
+							_showManStatus = SM_LIVE;
+							break;
+						case INVITE:
+							// set camera the new IN/Guest
+							/* var userVO:UserVO = new UserVO();
+							userVO.firstname = user.nameUser
+							userVO.lastname = user.nameUser
+							userVO.id_user = new int(user.idUser);
+							visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false); */
+							
+							if(this._loggedClientId == user.idUser)
+							{
+								visioIn.removeVideoStream(this._loggedClientId);
+								visioIn.includeInLayout = false; 
+								visioIn.visible = false;
+							}
+							// TODO desactive button
+							var userIn:com.model.User = this.getConnectedUserById(user.idUser, this.listUserIn);
+							userIn.statusUser = LIVE;
+							
+							break;
+					}
+					
+					// set camera
+					var userVO:UserVO = new UserVO();
+					userVO.firstname = user.nameUser
+					userVO.lastname = user.nameUser
+					userVO.id_user = new int(user.idUser);
+					visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
+					
+				}else
+				{
+					switch (role)
+					{
+						case SHOW_MAN:
+							visio.removeAllStreams();
+							if(this._loggedClientRole == INVITE)
+							{
+								var userVO:UserVO = new UserVO();
+								userVO.firstname = _loggedClientName;
+								userVO.lastname = _loggedClientName;
+								userVO.id_user = new int(_loggedClientId);
+								visioIn.addLocalDevice(new com.ithaca.visu.model.User(userVO));
+							}
+							
+							_showManStatus = SM_JOIN;
+							break;
+						case INVITE:
+							if(this._loggedClientId == user.idUser)
+							{
+								visioIn.streamID = _loggedClientId;
+								var userVO:UserVO = new UserVO();
+								userVO.firstname = _loggedClientName;
+								userVO.lastname = _loggedClientName;
+								userVO.id_user = new int(_loggedClientId);
+								visioIn.addLocalDevice(new com.ithaca.visu.model.User(userVO));
+								visioIn.includeInLayout = true;
+								visioIn.visible = true;
+							}
+							visio.removeVideoStream(user.idUser);
+							break;
+						
+					}
+				}
+					
+				showMessageForViewer();
+				
+				
+				/* if(user.roleUser == SHOW_MAN)
+				{
+					if(status == LIVE)
+					{
+						// set camera
+						var userVO:UserVO = new UserVO();
+						userVO.firstname = user.nameUser
+						userVO.lastname = user.nameUser
+						userVO.id_user = new int(user.idUser);
+						visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
+						_showManStatus = SM_LIVE;
+					}else
+					{
+						visio.removeVideoStream(userId);
+						_showManStatus = SM_JOIN;
+					}
+						showMessageForViewer();
+				}else{
+					// set camera the new IN/Guest
+					var userVO:UserVO = new UserVO();
+					userVO.firstname = user.nameUser
+					userVO.lastname = user.nameUser
+					userVO.id_user = new int(user.idUser);
+					visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
+					switch (user.roleUser)
+					{
+						case INVITE:
+							// TODO desactive button
+							var userIn:com.model.User = this.getConnectedUserById(user.idUser, this.listUserIn);
+							userIn.statusUser = LIVE;
+							break;
+						case OPERATOR:
+							break;
+						case VIEWER:
+							// TODO desactive button
+							break;
+							
+					}
+					
+						
+				} */
+			}
+		}
+		
+		private function leaveUser(event:MainManagerEvent):void
+		{
+			var userId:String = event.idClient;
+			var user:com.model.User = this.getConnectedUserById(userId, listConnectedUser);
+			if(user)
+			{
+				var roleUser:String = user.roleUser;
+				
+				switch(roleUser)
+				{
+					case SHOW_MAN:
+						visio.removeVideoStream(userId);
+						_showManStatus = SM_OUT;
+						showMessageForViewer();
+						// TODO change status on server side
+						var changeStatusEvent:MainManagerEvent = new MainManagerEvent(MainManagerEvent.SEND_NOTOFICATION_CHANGE_STATUS_USER);
+						changeStatusEvent.idClient = _loggedClientId;
+						changeStatusEvent.statusUser = PASSIVE;
+						dispatchEvent(changeStatusEvent); 
+						
+						break;
+					case OPERATOR:
+						break;
+					case INVITE:
+						if(user.statusUser == LIVE)
+						{
+							visio.removeVideoStream(userId);	
+						}
+						removeUserByIdInList(userId, listUserIn);
+						break;
+					case VIEWER:
+						removeUserByIdInList(userId, listUserViewer)
+						break;
+				}
+				
+				removeUserByIdInList(userId, listConnectedUser);
+			}
+			
+			this.showMessageForViewer();
+		}
+		
+		
+		private function checkChatMessageUser(event:MainManagerEvent):void
+		{
+			if(this._loggedClientRole == SHOW_MAN)
+			{
+				var userId:String = event.idClient;
+				var user:com.model.User = this.getConnectedUserById(userId, listConnectedUser);
+				if(user)
+				{
+					var roleUser:String = user.roleUser;
+					
+					switch(roleUser)
+					{
+						case INVITE:
+							var inviteUser:com.model.User = this.getConnectedUserById(userId, this.listUserIn);
+							inviteUser.message = event.message;
+							listIn.dataProvider.dispatchEvent( new CollectionEvent(CollectionEvent.COLLECTION_CHANGE));
+							break;
+						case VIEWER:
+							var viewerUser:com.model.User = this.getConnectedUserById(userId, this.listUserViewer);
+							viewerUser.message = event.message;
+							listViewer.dataProvider.dispatchEvent( new CollectionEvent(CollectionEvent.COLLECTION_CHANGE));
+							break;
+					}
+				}
+			}
+		}
+			
+		private function changeRoleUser(event:MainManagerEvent):void
+		{
+			// remove from list In/G add in list In/G
+		}
+		
+		
+		
+		
+		
+        protected function panelButton_clickButtonMuteMicroHandler(event:PanelButtonEvent):void
+        {
+			var status:String = PASSIVE;
+			if(!visio.mute)
+			{
+				status = LIVE;
+			}
+				var changeStatusEvent:MainManagerEvent = new MainManagerEvent(MainManagerEvent.SEND_NOTOFICATION_CHANGE_STATUS_USER);
+				changeStatusEvent.idClient = _loggedClientId;
+				changeStatusEvent.statusUser = status;
+				//dispatchEvent(changeStatusEvent); 
+				
+            visio.mute = !visio.mute;
+        }
+
+		private function addUserIn(value:UserVO):void
+		{
+			listUserIn.addItem(value);
+		}
+
+		protected function currentStateChangeHandler(event:StateChangeEvent):void
+		{
+			if(currentState == "viewLogin"  ||  currentState=="viewWaitAuthentication")
+			{
+				return;
+			}
+			
+			if(currentState == "viewShowMan")
+			{
+
+				visio.streamID = _loggedClientId;
+				
+				var userVO:UserVO = new UserVO();
+				userVO.firstname = "Ведущий";
+				userVO.lastname = "Ведущий";
+				userVO.id_user = 1;
+				visio.addLocalDevice(new com.ithaca.visu.model.User(userVO));
+				
+				// call other i am ready
+			}
+			else if ( currentState == "viewInvite")
+			{
+				visioIn.streamID = _loggedClientId;
+				var userVO:UserVO = new UserVO();
+				userVO.firstname = _loggedClientName;
+				userVO.lastname = _loggedClientName;
+				userVO.id_user = new int(_loggedClientId);
+				visioIn.addLocalDevice(new com.ithaca.visu.model.User(userVO));
+			}
+			
+			_showManStatus = SM_OUT;
+			this.showMessageForViewer();
+			
+			var notifictionEvent:MainManagerEvent = new MainManagerEvent(MainManagerEvent.SEND_NOTIFICATON_JOIN_USER);
+			dispatchEvent(notifictionEvent); 
+		}
+
+		private function addUser(value:com.model.User):void
+		{
+			if(value.idUser == this._loggedClientId)
+			{
+				//return;
+			}
+			
+			var userId:String = value.idUser;
+			var roleUser:String = value.roleUser;
+			
+			switch(roleUser)
+			{
+				case SHOW_MAN:
+					if(value.statusUser == LIVE)
+					{
+						var userVO:UserVO = new UserVO();
+						userVO.firstname = value.nameUser
+						userVO.lastname = value.nameUser
+						userVO.id_user = new int(value.idUser);
+						visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
+						_showManStatus = SM_LIVE;
+					}else
+					{
+						_showManStatus = SM_JOIN;
+					}
+					showMessageForViewer();
+					
+					break;
+				case OPERATOR:
+					break;
+				case INVITE:
+					if(value.statusUser == LIVE)
+					{
+						var userVO:UserVO = new UserVO();
+						userVO.firstname = value.nameUser
+						userVO.lastname = value.nameUser
+						userVO.id_user = new int(value.idUser);
+						visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
+					}
+					listUserIn.addItem(value);
+					break;
+				case VIEWER:
+					listUserViewer.addItem(value);
+					break;
+			}
+			
+			this.listConnectedUser.addItem(value);
+		}
+		
+		
+		private function getConnectedUserById(value:String, list:IList):com.model.User
+		{
+			for each (var user:com.model.User in list)
+			{
+				if(user.idUser == value)
+				{
+					return user;
+				}
+			}
+			return null;
+		}
+		
+		private function removeUserByIdInList(value:String, list:IList):void
+		{
+			var indexUser:int = getIndexUserByUserId(value, list);
+			if(indexUser > -1)
+			{
+				list.removeItemAt(indexUser);
+			}
+		}
+		
+		private function getIndexUserByUserId(value:String, list:IList):int
+		{
+			var result:int = -1;
+			var nbrUser:int = list.length;
+			for(var nUser:int = 0; nUser < nbrUser ; nUser++)
+			{
+				var user:com.model.User = list.getItemAt(nUser) as com.model.User;
+				if(user.idUser == value)
+				{
+					return nUser;
+				}
+			}
+			return result;
+		}
+		
+		private function showMessageForViewer():void
+		{
+			if(currentState == "viewGuest" || currentState =="viewInvite" )
+			{
+				switch(_showManStatus)
+				{
+					case SM_OUT:
+						if(showManOut)
+						showManOut.visible = true;
+						if(showManJoin)
+						showManJoin.visible = false;
+						var visibleChatGroup:Boolean = false;
+						if(currentState == "viewInvite")
+						{
+							visibleChatGroup = true;
+						}
+						chatGroup.includeInLayout = visibleChatGroup;
+						chatGroup.visible = visibleChatGroup;
+						break;
+					case SM_JOIN:
+						if(showManOut)
+						showManOut.visible = false;
+						if(showManJoin)
+						showManJoin.visible = true;
+						chatGroup.includeInLayout = true;
+						chatGroup.visible = true;
+						break;
+					case SM_LIVE:
+						if(showManOut)
+						showManOut.visible = false;
+						if(showManJoin)
+						showManJoin.visible = false;
+						chatGroup.includeInLayout = true;
+						chatGroup.visible = true;
+						break;
+				}
+			}
+		}
+
+		protected function chatButton_clickHandler(event:MouseEvent):void
+		{
+			var chatMessage:String = chatText.text;
+			var sendChatMessage:MainManagerEvent = new MainManagerEvent(MainManagerEvent.SEND_CHAT_MESSAGE_USER);
+			sendChatMessage.message = chatMessage;
+			dispatchEvent(sendChatMessage); 
+		}
+		
+		public function onAir_clickHandler(event:MouseEvent):void
+		{
+			var userIn:com.model.User = listIn.selectedItem as com.model.User;
+			var selected:Boolean = event.currentTarget.selected;
+			var status:String = PASSIVE;
+			if(selected)
+			{
+				status = LIVE;
+			}
+			var changeStatusEvent:MainManagerEvent = new MainManagerEvent(MainManagerEvent.SEND_NOTOFICATION_CHANGE_STATUS_USER);
+			changeStatusEvent.idClient = userIn.idUser;
+			changeStatusEvent.statusUser = status;
+			dispatchEvent(changeStatusEvent); 
+		}
+		
+
+
+		protected function onAirSM_clickHandler(event:MouseEvent):void
+		{
+			var status:String;
+			
+			if(onAirButton.name == PASSIVE)
+			{
+				status = LIVE;
+				onAirButton.label = "STOP OnAir";
+				onAirButton.name = LIVE;
+			}else
+			{
+				status = PASSIVE;
+				onAirButton.label = "OnAir";
+				onAirButton.name = PASSIVE;
+			}
+			
+			var changeStatusEvent:MainManagerEvent = new MainManagerEvent(MainManagerEvent.SEND_NOTOFICATION_CHANGE_STATUS_USER);
+			changeStatusEvent.idClient = _loggedClientId;
+			changeStatusEvent.statusUser = status;
+			dispatchEvent(changeStatusEvent); 
+		}
+
+    ]]>
+    </fx:Script>
+    <s:states>
+        <s:State name="viewLogin"/>
+        <s:State name="viewWaitAuthentication"/>
+        <s:State name="viewShowMan"/>
+        <s:State name="viewInvite"/>
+        <s:State name="viewOperator"/>
+        <s:State name="viewGuest"/>
+    </s:states>
+    <fx:Declarations>
+        <maps:MainMap id="mainMap"/>
+        <mate:Listener type="{MainManagerEvent.SET_LOGGED_USER}"  method="setLoggedUser"/>
+        <mate:Listener type="{MainManagerEvent.SET_CONNECTED_USERS}"  method="setConnectedUsers"/>
+        <mate:Listener type="{MainManagerEvent.CHANGE_STATUS_USER}"  method="changeStatusUser"/>
+        <mate:Listener type="{MainManagerEvent.CHECK_CHAT_MESSAGE_USER}"  method="checkChatMessageUser"/>
+        <mate:Listener type="{MainManagerEvent.JOUN_USER}"  method="joinUser"/>
+        <mate:Listener type="{MainManagerEvent.LEAVE_USER}"  method="leaveUser"/>
+    </fx:Declarations>
+    <s:VGroup  width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" includeIn="viewLogin">
+        <s:Label >
+            <s:text>Для начала просмотра WevTV выберите себе имя : </s:text>
+        </s:Label>   
+        
+        <containers:Form top="0" left="0" right="0" bottom="0">
+            <containers:layout>
+                <s:VerticalLayout />
+            </containers:layout>
+            
+            <containers:FormItem 
+                id="loginFormItem"
+                width="100%">
+                <s:TextInput id="loginField" width="150" />
+            </containers:FormItem>
+            
+            <containers:FormItem  width="100%">
+                <s:Button id="submit" width="150" click="submit_clickHandler(event)">
+                    <s:label>Подтвердить</s:label>
+                </s:Button>
+            </containers:FormItem>
+        </containers:Form>
+    </s:VGroup>
+	<s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" includeIn="viewWaitAuthentication">
+		<s:Label fontSize="18">
+			<s:text> Подтверждение входа  ... </s:text>
+		</s:Label>
+	</s:VGroup>
+    <s:HGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" includeIn="viewGuest,viewInvite,viewOperator,viewShowMan"
+			  paddingLeft="15" paddingBottom="15" paddingRight="15" paddingTop="15">
+		<s:HGroup width="100%" height="100%">
+			<s:VGroup height="100%" width="100%">
+		        <components:PanelButton id="panelButton" width="100%" height="100%" 
+		            buttonMuteMicroVisible.viewShowMan="true"
+		            clickButtonMuteMicro="panelButton_clickButtonMuteMicroHandler(event)"
+		            skinClass="com.ithaca.utils.components.skins.PanelButtonSkin">
+					<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+					<s:Button label="OnAir" fontSize="16" id="onAirButton" click="onAirSM_clickHandler(event)" includeIn="viewShowMan" name="{PASSIVE}"/>
+		            <video:VisuVisioAdvanced  id="visio"  connection="{_connection}" skinClass="com.ithaca.visu.view.video.skins.VisuVisioAdvancedSkin"
+		                width="100%" height="100%"
+		                autoPlay="True" horizontalCenter.viewShowMan="0" verticalCenter.viewShowMan="0" horizontalCenter.viewInvite="0" verticalCenter.viewInvite="0" horizontalCenter.viewOperator="0" verticalCenter.viewOperator="0" horizontalCenter.viewGuest="0" verticalCenter.viewGuest="0">
+		            </video:VisuVisioAdvanced>
+					<s:Label id="showManOut" includeIn="viewGuest, viewInvite" verticalCenter="0" horizontalCenter="0" visible="false">
+						<s:text>Ведущий пока ещё не в студии или обрыв связи</s:text>
+					</s:Label>
+					<s:Label id="showManJoin" includeIn="viewGuest, viewInvite" verticalCenter="0" horizontalCenter="0" visible="false">
+						<s:text>Ведущий в студии, Вы можете отправить ему вопрос</s:text>
+					</s:Label>						
+					</s:VGroup>
+		        </components:PanelButton>
+				<s:HGroup width="100%" id="chatGroup" includeInLayout="false">
+					<s:TextInput id="chatText" width="100%"/>
+					<s:Button id="chatButton" label="Отправить" click="chatButton_clickHandler(event)"/>
+					<video:VisuVisioAdvanced includeIn="viewInvite" id="visioIn" connection="{_connection}" skinClass="com.ithaca.visu.view.video.skins.VisuVisioAdvancedSkin" width="150" height="100"
+  autoPlay="true"/>
+				</s:HGroup>
+			</s:VGroup>
+			<s:Panel title="Список In" height="100%" width="300" includeIn="viewShowMan">
+			    <mx:DataGrid id="listIn" dataProvider="{listUserIn}" height="100%" width="100%">
+			        <mx:columns>
+			            <mx:DataGridColumn headerText="Логин" dataField="nameUser"/>
+			            <mx:DataGridColumn headerText="Сообщение" dataField="message" showDataTips="true"/>
+			            <mx:DataGridColumn headerText="ON AIR" width="45">
+							<mx:itemRenderer>
+								<fx:Component>
+									<mx:HBox width="100%" horizontalAlign="center">
+										<mx:CheckBox click="outerDocument.onAir_clickHandler(event)"/>
+									</mx:HBox >
+								</fx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+							
+			        </mx:columns>
+			    </mx:DataGrid>
+				
+			</s:Panel>
+			<s:Panel title="Список G" height="100%" width="150" includeIn="viewShowMan">
+			    <mx:DataGrid id="listViewer" dataProvider="{listUserViewer}" height="100%" width="100%">
+			        <mx:columns>
+			            <mx:DataGridColumn headerText="Логин" dataField="nameUser"/>
+			            <mx:DataGridColumn headerText="Сообщение" dataField="message" showDataTips="true"/>
+			        </mx:columns>
+			    </mx:DataGrid>
+			</s:Panel>
+		</s:HGroup>
+    </s:HGroup>
+</s:Application>
