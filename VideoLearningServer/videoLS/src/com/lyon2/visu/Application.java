@@ -114,6 +114,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private String INVITE = "In";
 	private String VIEWER = "Vw";
 	
+	private String  LIVE = "live";
+	private String  PASSIVE = "passive";
+	
 	
 	private static Logger log = Red5LoggerFactory.getLogger(Application.class,
 			"visu2");
@@ -160,7 +163,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			client.setAttribute("nameUser", nameUser + "_"+client.getId());
 		}
 		client.setAttribute("role", roleUser);
-		client.setAttribute("status", "passive");
+		client.setAttribute("status", PASSIVE);
 		return true;
 	}
 
@@ -226,11 +229,19 @@ public class Application extends MultiThreadedApplicationAdapter {
 	{
 		log.warn("===== notificationChangeStatusUser ");
 		log.warn(" userId " + userId + "status" + status);
-		
+		Boolean isSMchangeStatusPassive = false;
 		for (IClient client : this.getClients()) {
 			String clientId = client.getId();
 			if(clientId.equalsIgnoreCase(userId))
 			{
+				String roleUser = (String)client.getAttribute("role");
+				String statusUser =(String)client.getAttribute("status");
+				if( roleUser.equals(SHOW_MAN) &&  statusUser.equalsIgnoreCase(LIVE) && status.equalsIgnoreCase(PASSIVE) )
+				{
+					// check if SM change status => PASSIVE, do change status all INVITE(LIVE)
+					log.warn("SM => PASSIVE");
+					isSMchangeStatusPassive = true;
+				}
 				client.setAttribute("status", status);
 				log.warn(" set status " + status + "for usesr  " + client.getAttribute("nameUser"));
 			}
@@ -239,6 +250,28 @@ public class Application extends MultiThreadedApplicationAdapter {
 		IScope scope = conn.getScope();
 		// notify ALL the client in the scope that new user is join
 		invokeOnScopeClients(scope, "changeStatusUser", obj);
+		
+		if(isSMchangeStatusPassive)
+		{
+			notificationChangeStatusByRoleUser(conn, status, INVITE);
+		}
+	}
+	
+	private void notificationChangeStatusByRoleUser(IConnection conn, String status, String role)
+	{
+		for (IClient client : this.getClients()) {
+			String roleUser = (String)client.getAttribute("role");
+			if(roleUser.equalsIgnoreCase(role))
+			{
+				client.setAttribute("status", status);
+				String userId = client.getId();
+				log.warn("INVITE => PASSIVE");
+				Object[] obj = { userId, status };
+				IScope scope = conn.getScope();
+				// notify ALL the client in the scope that new user is join
+				invokeOnScopeClients(scope, "changeStatusUser", obj);	
+			}
+		}
 	}
 	
 	public void sendChatMessageUser(IConnection conn, String message)
@@ -250,48 +283,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		// notify ALL the client in the scope that new user is join
 		invokeOnScopeClients(scope, "checkChatMessageUser", obj);
 	}
-	
-	
-
-	
-
-	
-
-//	/**
-//	 *  Get id client tuteur
-//	 */
-//	public void getIdTuteur(IConnection conn, String nameTuteur) {
-//		
-//		log.warn("=== getIdTuteur nameTuteur = {}", nameTuteur);
-//		String idClientTuteur = "void";
-//		for (IClient client : this.getClients()) {
-//			String nameUser = (String) client.getAttribute("nameUser");
-//			if(nameUser.equals(nameTuteur))
-//			{
-//				idClientTuteur = client.getId();
-//			}
-//		}
-//		log.warn("=== idClientTuteur = {}", idClientTuteur);
-//		Object[] obj = { idClientTuteur };
-//		if (conn instanceof IServiceCapableConnection) {
-//			IServiceCapableConnection sc = (IServiceCapableConnection) conn;
-//			sc.invoke("checkIdClientTuteur", obj);
-//		}
-//	}
-	
-	
-	
-//	/**
-//	 *  Set id client tuteur
-//	 */
-//	public void setIdTuteur(IConnection conn, String idClientTuteur) {
-//		
-//		log.warn("=== setIdTuteur idClientTuteur = {}", idClientTuteur);
-//		Object[] args = { idClientTuteur };
-//		// Get the Client Scope
-//		IScope scope = conn.getScope();
-//		invokeOnScopeClients(scope, "checkIdClientTuteur", args);
-//	}
 	
 	public void invokeOnScopeClients(IScope scope, String method, Object[] arg) {
 		Collection<Set<IConnection>> conCollection = scope.getConnections();
