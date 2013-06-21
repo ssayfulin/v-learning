@@ -47,8 +47,8 @@
 		private static var INVITE:String = "In";
 		private static var VIEWER:String = "Vw";
 		
-		private static var LIVE:String = "live";
-		private static var PASSIVE:String = "passive";
+		public var LIVE:String = "live";
+		public var PASSIVE:String = "passive";
 		
 		private static var SM_OUT:String = "showManOut";
 		private static var SM_JOIN:String = "showManJoin";
@@ -216,9 +216,9 @@
 			var userId:String = event.idClient;
 			var status:String = event.statusUser;
 			var user:com.model.User = getConnectedUserById(userId, listConnectedUser);
-			var role:String = user.roleUser;
 			if(user)
 			{
+				var role:String = user.roleUser;
 				user.statusUser = status;
 				
 				if(status == LIVE)
@@ -226,21 +226,10 @@
 					switch (role)
 					{
 						case SHOW_MAN:
-							// set camera
-							/* var userVO:UserVO = new UserVO();
-							userVO.firstname = user.nameUser
-							userVO.lastname = user.nameUser
-							userVO.id_user = new int(user.idUser);
-							visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false); */
+							
 							_showManStatus = SM_LIVE;
 							break;
 						case INVITE:
-							// set camera the new IN/Guest
-							/* var userVO:UserVO = new UserVO();
-							userVO.firstname = user.nameUser
-							userVO.lastname = user.nameUser
-							userVO.id_user = new int(user.idUser);
-							visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false); */
 							
 							if(this._loggedClientId == user.idUser)
 							{
@@ -292,55 +281,20 @@
 								visioIn.visible = true;
 							}
 							visio.removeVideoStream(user.idUser);
+							var userIn:com.model.User = this.getConnectedUserById(user.idUser, this.listUserIn);
+							userIn.statusUser = PASSIVE;
 							break;
 						
 					}
 				}
 					
 				showMessageForViewer();
-				
-				
-				/* if(user.roleUser == SHOW_MAN)
+				if(listIn)
 				{
-					if(status == LIVE)
-					{
-						// set camera
-						var userVO:UserVO = new UserVO();
-						userVO.firstname = user.nameUser
-						userVO.lastname = user.nameUser
-						userVO.id_user = new int(user.idUser);
-						visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
-						_showManStatus = SM_LIVE;
-					}else
-					{
-						visio.removeVideoStream(userId);
-						_showManStatus = SM_JOIN;
-					}
-						showMessageForViewer();
-				}else{
-					// set camera the new IN/Guest
-					var userVO:UserVO = new UserVO();
-					userVO.firstname = user.nameUser
-					userVO.lastname = user.nameUser
-					userVO.id_user = new int(user.idUser);
-					visio.addVideoStream(userId, new com.ithaca.visu.model.User(userVO), 1.0 ,false);
-					switch (user.roleUser)
-					{
-						case INVITE:
-							// TODO desactive button
-							var userIn:com.model.User = this.getConnectedUserById(user.idUser, this.listUserIn);
-							userIn.statusUser = LIVE;
-							break;
-						case OPERATOR:
-							break;
-						case VIEWER:
-							// TODO desactive button
-							break;
-							
-					}
-					
-						
-				} */
+					listIn.dataProvider.dispatchEvent( new CollectionEvent(CollectionEvent.COLLECTION_CHANGE));
+				}
+				
+				
 			}
 		}
 		
@@ -736,7 +690,7 @@
 							<mx:itemRenderer>
 								<fx:Component>
 									<mx:HBox width="100%" horizontalAlign="center">
-										<mx:CheckBox click="outerDocument.onAir_clickHandler(event)"/>
+										<mx:CheckBox click="outerDocument.onAir_clickHandler(event)" selected="{data.statusUser == outerDocument.LIVE}"/>
 									</mx:HBox >
 								</fx:Component>
 							</mx:itemRenderer>
